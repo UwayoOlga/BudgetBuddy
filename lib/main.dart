@@ -1,125 +1,158 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'auth.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Color(0xFF1A0023),
+        colorScheme: ColorScheme.dark(
+          primary: Color(0xFF6C2EB7),
+          secondary: Color(0xFFF5F5F5),
+          background: Color(0xFF1A0023),
+        ),
+        textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme).apply(
+          bodyColor: Colors.white,
+          displayColor: Colors.white,
+        ),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Color(0xFF4B006E),
+          elevation: 0,
+        ),
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: Color(0xFF6C2EB7),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Color(0xFF2D0146),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      initialRoute: '/',
+      onGenerateRoute: (settings) {
+        if (settings.name == '/home') {
+          final userId = settings.arguments as int;
+          return MaterialPageRoute(builder: (_) => MainAppScreen(userId: userId));
+        }
+        switch (settings.name) {
+          case '/':
+            return MaterialPageRoute(builder: (_) => SplashScreen());
+          case '/register':
+            return MaterialPageRoute(builder: (_) => RegisterScreen());
+          case '/login':
+            return MaterialPageRoute(builder: (_) => LoginScreen());
+        }
+        return null;
+      },
     );
+  }
+}
+
+class SplashScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    Future.delayed(Duration(seconds: 2), () {
+      Navigator.pushReplacementNamed(context, '/login');
+    });
+    return Scaffold(
+      body: Center(
+        child: Text('BudgetBuddy', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Color(0xFF6C2EB7))),
+      ),
+    );
+  }
+}
+
+class MainAppScreen extends StatefulWidget {
+  final int userId;
+  MainAppScreen({required this.userId});
+  @override
+  State<MainAppScreen> createState() => _MainAppScreenState();
+}
+
+class _MainAppScreenState extends State<MainAppScreen> {
+  int _index = 0;
+  @override
+  Widget build(BuildContext context) {
+    final screens = [
+      DashboardScreen(userId: widget.userId),
+      AddExpenseScreen(userId: widget.userId),
+      ReportsScreen(userId: widget.userId),
+      SavingsScreen(userId: widget.userId),
+      SettingsScreen(userId: widget.userId),
+    ];
+    return Scaffold(
+      body: screens[_index],
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Color(0xFF2D0146),
+        selectedItemColor: Color(0xFF6C2EB7),
+        unselectedItemColor: Colors.white,
+        currentIndex: _index,
+        onTap: (i) => setState(() => _index = i),
+        type: BottomNavigationBarType.fixed,
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
+          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Add'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Reports'),
+          BottomNavigationBarItem(icon: Icon(Icons.savings), label: 'Savings'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        ],
+      ),
+    );
+  }
+}
+
+class DashboardScreen extends StatelessWidget {
+  final int userId;
+  DashboardScreen({required this.userId});
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Dashboard', style: TextStyle(fontSize: 24)));
+  }
+}
+
+class AddExpenseScreen extends StatelessWidget {
+  final int userId;
+  AddExpenseScreen({required this.userId});
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Add Expense', style: TextStyle(fontSize: 24)));
+  }
+}
+
+class ReportsScreen extends StatelessWidget {
+  final int userId;
+  ReportsScreen({required this.userId});
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Reports', style: TextStyle(fontSize: 24)));
+  }
+}
+
+class SavingsScreen extends StatelessWidget {
+  final int userId;
+  SavingsScreen({required this.userId});
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Savings', style: TextStyle(fontSize: 24)));
+  }
+}
+
+class SettingsScreen extends StatelessWidget {
+  final int userId;
+  SettingsScreen({required this.userId});
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Settings', style: TextStyle(fontSize: 24)));
   }
 }
