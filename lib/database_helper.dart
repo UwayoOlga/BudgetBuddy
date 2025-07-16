@@ -37,6 +37,18 @@ class DatabaseHelper {
         date TEXT,
         description TEXT,
         paymentMethod TEXT,
+        isRecurring INTEGER DEFAULT 0,
+        FOREIGN KEY(userId) REFERENCES users(id)
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE incomes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER,
+        amount REAL,
+        source TEXT,
+        date TEXT,
+        notes TEXT,
         FOREIGN KEY(userId) REFERENCES users(id)
       )
     ''');
@@ -46,6 +58,8 @@ class DatabaseHelper {
         userId INTEGER,
         month TEXT,
         amount REAL,
+        category TEXT,
+        period TEXT,
         FOREIGN KEY(userId) REFERENCES users(id)
       )
     ''');
@@ -113,6 +127,45 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getSavings(int userId) async {
     final db = await instance.database;
     return await db.query('savings', where: 'userId = ?', whereArgs: [userId]);
+  }
+
+  Future<int> addIncome(Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.insert('incomes', data);
+  }
+
+  Future<List<Map<String, dynamic>>> getIncomes(int userId) async {
+    final db = await instance.database;
+    return await db.query('incomes', where: 'userId = ?', whereArgs: [userId], orderBy: 'date DESC');
+  }
+
+  Future<int> deleteIncome(int id) async {
+    final db = await instance.database;
+    return await db.delete('incomes', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<Map<String, dynamic>>> getRecurringExpenses(int userId) async {
+    final db = await instance.database;
+    return await db.query('expenses', where: 'userId = ? AND isRecurring = 1', whereArgs: [userId]);
+  }
+
+  Future<void> autoAddRecurringExpenses(int userId, DateTime now) async {
+    final db = await instance.database;
+    final recurs = await getRecurringExpenses(userId);
+    for (var e in recurs) {
+      DateTime lastDate = DateTime.parse(e['date']);
+      if (lastDate.month != now.month || lastDate.year != now.year) {
+        await db.insert('expenses', {
+          'userId': userId,
+          'amount': e['amount'],
+          'category': e['category'],
+          'date': DateTime(now.year, now.month, lastDate.day).toIso8601String(),
+          'description': e['description'],
+          'paymentMethod': e['paymentMethod'],
+          'isRecurring': 1,
+        });
+      }
+    }
   }
 
   Future<void> close() async {

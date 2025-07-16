@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'auth.dart';
+import 'dashboard.dart';
+import 'reports.dart';
+import 'savings.dart';
+import 'settings.dart';
+import 'income.dart';
+import 'budget.dart';
+import 'calendar.dart';
 
 void main() {
   runApp(MyApp());
@@ -87,6 +94,9 @@ class _MainAppScreenState extends State<MainAppScreen> {
     final screens = [
       DashboardScreen(userId: widget.userId),
       AddExpenseScreen(userId: widget.userId),
+      IncomeScreen(userId: widget.userId),
+      BudgetScreen(userId: widget.userId),
+      CalendarScreen(userId: widget.userId),
       ReportsScreen(userId: widget.userId),
       SavingsScreen(userId: widget.userId),
       SettingsScreen(userId: widget.userId),
@@ -103,56 +113,14 @@ class _MainAppScreenState extends State<MainAppScreen> {
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Add'),
+          BottomNavigationBarItem(icon: Icon(Icons.attach_money), label: 'Income'),
+          BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Budgets'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
           BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Reports'),
           BottomNavigationBarItem(icon: Icon(Icons.savings), label: 'Savings'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],
       ),
     );
-  }
-}
-
-class DashboardScreen extends StatelessWidget {
-  final int userId;
-  DashboardScreen({required this.userId});
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('Dashboard', style: TextStyle(fontSize: 24)));
-  }
-}
-
-class AddExpenseScreen extends StatelessWidget {
-  final int userId;
-  AddExpenseScreen({required this.userId});
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('Add Expense', style: TextStyle(fontSize: 24)));
-  }
-}
-
-class ReportsScreen extends StatelessWidget {
-  final int userId;
-  ReportsScreen({required this.userId});
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('Reports', style: TextStyle(fontSize: 24)));
-  }
-}
-
-class SavingsScreen extends StatelessWidget {
-  final int userId;
-  SavingsScreen({required this.userId});
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('Savings', style: TextStyle(fontSize: 24)));
-  }
-}
-
-class SettingsScreen extends StatelessWidget {
-  final int userId;
-  SettingsScreen({required this.userId});
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('Settings', style: TextStyle(fontSize: 24)));
   }
 }

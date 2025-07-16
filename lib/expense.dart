@@ -18,6 +18,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final descController = TextEditingController();
   final categories = ['Food', 'Transport', 'Books', 'Fun', 'Other'];
   final paymentMethods = ['Cash', 'Debit Card', 'Mobile Money'];
+  bool isRecurring = false;
 
   void addExpense() async {
     if (amount > 0) {
@@ -27,7 +28,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         'category': category,
         'date': date.toIso8601String(),
         'description': description,
-        'paymentMethod': paymentMethod
+        'paymentMethod': paymentMethod,
+        'isRecurring': isRecurring ? 1 : 0,
       });
       Navigator.pop(context);
     }
@@ -81,6 +83,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Add Expense')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: addExpense,
+        child: Icon(Icons.check),
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(24),
@@ -108,36 +114,55 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               SizedBox(height: 16),
               Text('Category', style: TextStyle(fontSize: 18)),
               SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: categories.map((cat) {
-                  IconData icon;
-                  switch (cat) {
-                    case 'Food': icon = Icons.fastfood; break;
-                    case 'Transport': icon = Icons.directions_bus; break;
-                    case 'Books': icon = Icons.book; break;
-                    case 'Fun': icon = Icons.celebration; break;
-                    default: icon = Icons.category;
-                  }
-                  return GestureDetector(
-                    onTap: () => setState(() => category = cat),
-                    child: AnimatedContainer(
-                      duration: Duration(milliseconds: 200),
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: category == cat ? Color(0xFF6C2EB7) : Color(0xFF2D0146),
-                        borderRadius: BorderRadius.circular(12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: categories.map((cat) {
+                    IconData icon;
+                    String imageUrl = '';
+                    switch (cat) {
+                      case 'Food':
+                        icon = Icons.fastfood;
+                        imageUrl = 'https://img.icons8.com/color/48/000000/meal.png';
+                        break;
+                      case 'Transport':
+                        icon = Icons.directions_bus;
+                        imageUrl = 'https://img.icons8.com/color/48/000000/bus.png';
+                        break;
+                      case 'Books':
+                        icon = Icons.book;
+                        imageUrl = 'https://img.icons8.com/color/48/000000/book.png';
+                        break;
+                      case 'Fun':
+                        icon = Icons.celebration;
+                        imageUrl = 'https://img.icons8.com/color/48/000000/confetti.png';
+                        break;
+                      default:
+                        icon = Icons.category;
+                        imageUrl = 'https://img.icons8.com/color/48/000000/money.png';
+                    }
+                    return GestureDetector(
+                      onTap: () => setState(() => category = cat),
+                      child: AnimatedContainer(
+                        duration: Duration(milliseconds: 200),
+                        margin: EdgeInsets.only(right: 12),
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: category == cat ? Color(0xFF6C2EB7) : Color(0xFF2D0146),
+                          borderRadius: BorderRadius.circular(12),
+                          border: category == cat ? Border.all(color: Colors.white, width: 2) : null,
+                        ),
+                        child: Column(
+                          children: [
+                            Image.network(imageUrl, width: 32, height: 32),
+                            SizedBox(height: 4),
+                            Text(cat, style: TextStyle(fontSize: 12, color: Colors.white)),
+                          ],
+                        ),
                       ),
-                      child: Column(
-                        children: [
-                          Icon(icon, color: Colors.white),
-                          SizedBox(height: 4),
-                          Text(cat, style: TextStyle(fontSize: 12, color: Colors.white)),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
+                    );
+                  }).toList(),
+                ),
               ),
               SizedBox(height: 16),
               Text('Date', style: TextStyle(fontSize: 18)),
@@ -175,13 +200,24 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 ),
               ),
               SizedBox(height: 16),
-              Text('Description', style: TextStyle(fontSize: 18)),
+              Text('Notes (optional)', style: TextStyle(fontSize: 18)),
               SizedBox(height: 8),
               TextField(
                 controller: descController,
                 onChanged: (v) => description = v,
                 style: TextStyle(color: Colors.white),
                 decoration: InputDecoration(hintText: 'e.g. Coffee with friends'),
+              ),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Checkbox(
+                    value: isRecurring,
+                    onChanged: (v) => setState(() => isRecurring = v ?? false),
+                    activeColor: Color(0xFF6C2EB7),
+                  ),
+                  Text('Recurring expense', style: TextStyle(color: Colors.white)),
+                ],
               ),
               SizedBox(height: 16),
               Text('Payment Method', style: TextStyle(fontSize: 18)),
