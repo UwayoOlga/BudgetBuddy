@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'database_helper.dart';
+import 'package:hive/hive.dart';
+import 'user.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -19,12 +22,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() { error = 'All fields required'; });
       return;
     }
-    try {
-      int id = await DatabaseHelper.instance.registerUser(username, password);
-      Navigator.pushReplacementNamed(context, '/login');
-    } catch (e) {
+    var usersBox = Hive.box<User>('users');
+    bool exists = usersBox.values.any((u) => u.username == username);
+    if (exists) {
       setState(() { error = 'Username already exists'; });
+      return;
     }
+    var hash = sha256.convert(utf8.encode(password)).toString();
+    await usersBox.add(User(username: username, passwordHash: hash));
+    Navigator.pushReplacementNamed(context, '/login');
   }
 
   @override
@@ -105,9 +111,14 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() { error = 'All fields required'; });
       return;
     }
-    int? userId = await DatabaseHelper.instance.loginUser(username, password);
-    if (userId != null) {
-      Navigator.pushReplacementNamed(context, '/home', arguments: userId);
+    var usersBox = Hive.box<User>('users');
+    var hash = sha256.convert(utf8.encode(password)).toString();
+    final user = usersBox.values.firstWhere(
+      (u) => u.username == username && u.passwordHash == hash,
+      orElse: () => null,
+    );
+    if (user != null) {
+      Navigator.pushReplacementNamed(context, '/home', arguments: user.key);
     } else {
       setState(() { error = 'Invalid credentials'; });
     }

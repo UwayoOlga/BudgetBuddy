@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'database_helper.dart';
+import 'package:hive/hive.dart';
+import 'budget_model.dart';
 
 class BudgetScreen extends StatefulWidget {
   final int userId;
@@ -12,7 +13,6 @@ class _BudgetScreenState extends State<BudgetScreen> {
   List<String> categories = ['Food', 'Transport', 'Books', 'Fun', 'Other'];
   String period = 'Monthly';
   Map<String, double> categoryBudgets = {};
-  double overallBudget = 0;
   bool loading = true;
 
   @override
@@ -23,17 +23,20 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   Future<void> loadBudgets() async {
     setState(() { loading = true; });
-    var now = DateTime.now();
-    String month = "${now.year}-${now.month.toString().padLeft(2, '0')}";
+    var budgetsBox = Hive.box<Budget>('budgets');
     for (var cat in categories) {
-      var b = await DatabaseHelper.instance.getBudget(widget.userId, month, cat, period);
-      categoryBudgets[cat] = b != null ? (b['amount'] ?? 0) : 0;
+      var b = budgetsBox.values.firstWhere(
+        (b) => b.userId == widget.userId && b.category == cat && b.period == period,
+        orElse: () => null,
+      );
+      categoryBudgets[cat] = b != null ? (b.amount) : 0;
     }
     setState(() { loading = false; });
   }
 
   void showEditBudgetDialog(String cat) {
     double amount = categoryBudgets[cat] ?? 0;
+    var budgetsBox = Hive.box<Budget>('budgets');
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -53,15 +56,22 @@ class _BudgetScreenState extends State<BudgetScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
             onPressed: () async {
-              var now = DateTime.now();
-              String month = "${now.year}-${now.month.toString().padLeft(2, '0')}";
-              await DatabaseHelper.instance.addBudget({
-                'userId': widget.userId,
-                'month': month,
-                'amount': amount,
-                'category': cat,
-                'period': period,
-              });
+              var existing = budgetsBox.values.firstWhere(
+                (b) => b.userId == widget.userId && b.category == cat && b.period == period,
+                orElse: () => null,
+              );
+              if (existing != null) {
+                existing.amount = amount;
+                await existing.save();
+              } else {
+                await budgetsBox.add(Budget(
+                  userId: widget.userId,
+                  month: '',
+                  amount: amount,
+                  category: cat,
+                  period: period,
+                ));
+              }
               Navigator.pop(context);
               loadBudgets();
             },
@@ -92,32 +102,35 @@ class _BudgetScreenState extends State<BudgetScreen> {
         ),
         SizedBox(height: 24),
         ...categories.map((cat) {
-          double spent = 0; // You can fetch actual spent from expenses if needed
+          var budgetsBox = Hive.box<Budget>('budgets');
+          var b = budgetsBox.values.firstWhere(
+            (b) => b.userId == widget.userId && b.category == cat && b.period == period,
+            orElse: () => null,
+          );
           double budget = categoryBudgets[cat] ?? 0;
-          double percent = budget == 0 ? 0 : (spent / budget).clamp(0, 1);
-          Color barColor = percent > 0.9 ? Colors.redAccent : percent > 0.7 ? Colors.orangeAccent : Color(0xFF6C2EB7);
           return Card(
             color: Color(0xFF2D0146),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             margin: EdgeInsets.only(bottom: 16),
             child: ListTile(
               title: Text(cat, style: TextStyle(color: Colors.white)),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              subtitle: Text('${budget.toStringAsFixed(2)}', style: TextStyle(color: Colors.white70)),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: percent,
-                    backgroundColor: Color(0xFF4B006E),
-                    color: barColor,
+                  IconButton(
+                    icon: Icon(Icons.edit, color: Color(0xFF6C2EB7)),
+                    onPressed: () => showEditBudgetDialog(cat),
                   ),
-                  SizedBox(height: 4),
-                  Text('${spent.toStringAsFixed(2)} spent / ${budget.toStringAsFixed(2)}', style: TextStyle(color: Colors.white70)),
+                  if (b != null)
+                    IconButton(
+                      icon: Icon(Icons.delete, color: Colors.redAccent),
+                      onPressed: () async {
+                        await b.delete();
+                        loadBudgets();
+                      },
+                    ),
                 ],
-              ),
-              trailing: IconButton(
-                icon: Icon(Icons.edit, color: Color(0xFF6C2EB7)),
-                onPressed: () => showEditBudgetDialog(cat),
               ),
             ),
           );

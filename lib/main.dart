@@ -8,8 +8,26 @@ import 'settings.dart';
 import 'income.dart';
 import 'budget.dart';
 import 'calendar.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'user.dart';
+import 'expense_model.dart';
+import 'income_model.dart';
+import 'budget_model.dart';
+import 'savings_goal_model.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  Hive.registerAdapter(UserAdapter());
+  Hive.registerAdapter(ExpenseAdapter());
+  Hive.registerAdapter(IncomeAdapter());
+  Hive.registerAdapter(BudgetAdapter());
+  Hive.registerAdapter(SavingsGoalAdapter());
+  await Hive.openBox<User>('users');
+  await Hive.openBox<Expense>('expenses');
+  await Hive.openBox<Income>('incomes');
+  await Hive.openBox<Budget>('budgets');
+  await Hive.openBox<SavingsGoal>('savings');
   runApp(MyApp());
 }
 

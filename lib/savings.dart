@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'database_helper.dart';
+import 'package:hive/hive.dart';
+import 'savings_goal_model.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -11,9 +12,9 @@ class SavingsScreen extends StatefulWidget {
 }
 
 class _SavingsScreenState extends State<SavingsScreen> {
-  List<Map<String, dynamic>> goals = [];
   bool loading = true;
   bool showConfetti = false;
+  List<SavingsGoal> goals = [];
 
   @override
   void initState() {
@@ -23,7 +24,8 @@ class _SavingsScreenState extends State<SavingsScreen> {
 
   Future<void> loadData() async {
     setState(() { loading = true; });
-    goals = await DatabaseHelper.instance.getSavings(widget.userId);
+    var savingsBox = Hive.box<SavingsGoal>('savings');
+    goals = savingsBox.values.where((g) => g.userId == widget.userId).toList();
     setState(() { loading = false; });
   }
 
@@ -95,18 +97,114 @@ class _SavingsScreenState extends State<SavingsScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
             onPressed: () async {
               if (name.isNotEmpty && target > 0 && targetDate != null) {
-                await DatabaseHelper.instance.addSavings({
-                  'userId': widget.userId,
-                  'name': name,
-                  'targetAmount': target,
-                  'savedAmount': 0,
-                  'targetDate': targetDate!.toIso8601String(),
-                });
+                var savingsBox = Hive.box<SavingsGoal>('savings');
+                await savingsBox.add(SavingsGoal(
+                  userId: widget.userId,
+                  name: name,
+                  targetAmount: target,
+                  savedAmount: 0,
+                  targetDate: targetDate!,
+                ));
                 Navigator.pop(context);
                 loadData();
               }
             },
             child: Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void showUpdateGoalDialog(SavingsGoal goal) {
+    String name = goal.name;
+    double target = goal.targetAmount;
+    double saved = goal.savedAmount;
+    DateTime targetDate = goal.targetDate;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Color(0xFF2D0146),
+        title: Text('Update Goal', style: TextStyle(color: Color(0xFF6C2EB7))),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                onChanged: (v) => name = v,
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(hintText: 'Goal name'),
+                controller: TextEditingController(text: goal.name),
+              ),
+              SizedBox(height: 8),
+              TextField(
+                keyboardType: TextInputType.number,
+                onChanged: (v) => target = double.tryParse(v) ?? 0,
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(hintText: 'Target amount'),
+                controller: TextEditingController(text: goal.targetAmount.toString()),
+              ),
+              SizedBox(height: 8),
+              TextField(
+                keyboardType: TextInputType.number,
+                onChanged: (v) => saved = double.tryParse(v) ?? 0,
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(hintText: 'Saved amount'),
+                controller: TextEditingController(text: goal.savedAmount.toString()),
+              ),
+              SizedBox(height: 8),
+              GestureDetector(
+                onTap: () async {
+                  DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: targetDate,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime(2100),
+                    builder: (context, child) {
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: ColorScheme.dark(
+                            primary: Color(0xFF6C2EB7),
+                            onPrimary: Colors.white,
+                            surface: Color(0xFF2D0146),
+                            onSurface: Colors.white,
+                          ),
+                        ),
+                        child: child!,
+                      );
+                    },
+                  );
+                  if (picked != null) targetDate = picked;
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF4B006E),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(DateFormat('yyyy-MM-dd').format(targetDate), style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
+            onPressed: () async {
+              goal.name = name;
+              goal.targetAmount = target;
+              goal.savedAmount = saved;
+              goal.targetDate = targetDate;
+              await goal.save();
+              Navigator.pop(context);
+              setState(() {});
+            },
+            child: Text('Update'),
           ),
         ],
       ),
@@ -134,7 +232,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
             ),
             SizedBox(height: 24),
             ...goals.map((g) {
-              double percent = g['targetAmount'] == 0 ? 0 : (g['savedAmount'] / g['targetAmount']).clamp(0, 1);
+              double percent = g.targetAmount == 0 ? 0 : (g.savedAmount / g.targetAmount).clamp(0, 1);
               bool completed = percent >= 1;
               if (completed && !showConfetti) {
                 SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -154,8 +252,8 @@ class _SavingsScreenState extends State<SavingsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(g['name'] ?? '', style: TextStyle(fontSize: 18, color: Colors.white)),
-                          Text('${g['savedAmount'].toStringAsFixed(2)} / ${g['targetAmount'].toStringAsFixed(2)}', style: TextStyle(color: Colors.white70)),
+                          Text(g.name, style: TextStyle(fontSize: 18, color: Colors.white)),
+                          Text('${g.savedAmount.toStringAsFixed(2)} / ${g.targetAmount.toStringAsFixed(2)}', style: TextStyle(color: Colors.white70)),
                         ],
                       ),
                       SizedBox(height: 8),
@@ -181,7 +279,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                         ],
                       ),
                       SizedBox(height: 8),
-                      Text('Target: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(g['targetDate']))}', style: TextStyle(color: Colors.white54)),
+                      Text('Target: ${DateFormat('yyyy-MM-dd').format(g.targetDate)}', style: TextStyle(color: Colors.white54)),
                       if (completed)
                         Center(
                           child: Icon(Icons.celebration, color: Colors.amber, size: 32),
@@ -197,6 +295,24 @@ class _SavingsScreenState extends State<SavingsScreen> {
                             ],
                           ),
                         ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.edit, color: Colors.white70),
+                            onPressed: () async {
+                              showUpdateGoalDialog(g);
+                            },
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete, color: Colors.redAccent),
+                            onPressed: () async {
+                              await g.delete();
+                              loadData();
+                            },
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
