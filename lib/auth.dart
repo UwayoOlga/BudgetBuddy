@@ -115,8 +115,8 @@ class _LoginScreenState extends State<LoginScreen> {
     var hash = sha256.convert(utf8.encode(password)).toString();
     final user = usersBox.values.firstWhere(
       (u) => u.username == username && u.passwordHash == hash,
-      orElse: () => null,
-    );
+      orElse: () => User.defaultUser(),
+    ) as User?;
     if (user != null) {
       Navigator.pushReplacementNamed(context, '/home', arguments: user.key);
     } else {

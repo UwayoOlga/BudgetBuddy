@@ -14,6 +14,7 @@ import 'expense_model.dart';
 import 'income_model.dart';
 import 'budget_model.dart';
 import 'savings_goal_model.dart';
+import 'expense.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

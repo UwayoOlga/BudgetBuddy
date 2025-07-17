@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'database_helper.dart';
 import 'package:intl/intl.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -30,8 +29,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Future<void> loadData() async {
     setState(() { loading = true; });
-    var all = await DatabaseHelper.instance.getExpenses(widget.userId);
-    incomes = await DatabaseHelper.instance.getIncomes(widget.userId);
+    // TODO: Replace with Hive logic for expenses and incomes
+    // var all = await DatabaseHelper.instance.getExpenses(widget.userId);
+    // incomes = await DatabaseHelper.instance.getIncomes(widget.userId);
+    expenses = [];
+    incomes = [];
     DateTime now = DateTime.now();
     DateTime start;
     if (period == 'This Month') {
@@ -41,7 +43,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     } else {
       start = DateTime(now.year, now.month, 1);
     }
-    expenses = all.where((e) => DateTime.parse(e['date']).isAfter(start)).toList();
+    expenses = expenses.where((e) => DateTime.parse(e['date']).isAfter(start)).toList();
     allCategories = ['All'] + expenses.map((e) => e['category'] as String).toSet().toList();
     allPaymentMethods = ['All'] + expenses.map((e) => e['paymentMethod'] as String).toSet().toList();
     if (filterCategory != 'All') {

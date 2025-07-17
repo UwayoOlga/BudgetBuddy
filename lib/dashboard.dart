@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'database_helper.dart';
 import 'dart:math';
 
 class DashboardScreen extends StatefulWidget {
@@ -26,11 +25,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> loadData() async {
     setState(() { loading = true; });
-    await DatabaseHelper.instance.autoAddRecurringExpenses(widget.userId, DateTime.now());
-    var expenses = await DatabaseHelper.instance.getExpenses(widget.userId);
+    // TODO: Replace with Hive logic for recurring expenses
+    // await DatabaseHelper.instance.autoAddRecurringExpenses(widget.userId, DateTime.now());
+    // TODO: Replace with Hive logic for expenses
+    // var expenses = await DatabaseHelper.instance.getExpenses(widget.userId);
+    var expenses = [];
     var now = DateTime.now();
     var month = "${now.year}-${now.month.toString().padLeft(2, '0')}";
-    var budgetData = await DatabaseHelper.instance.getBudget(widget.userId, month);
+    // TODO: Replace with Hive logic for budget
+    // var budgetData = await DatabaseHelper.instance.getBudget(widget.userId, month);
+    var budgetData = null;
     budget = budgetData != null ? (budgetData['amount'] ?? 0) : 0;
     spent = 0;
     totalBalance = 0;
@@ -41,7 +45,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       categoryTotals[e['category']] = (categoryTotals[e['category']] ?? 0) + amt;
     }
     totalBalance = budget - spent;
-    recentExpenses = expenses.take(5).toList();
+    recentExpenses = expenses.take(5).cast<Map<String, dynamic>>().toList();
     setState(() { loading = false; });
   }
 

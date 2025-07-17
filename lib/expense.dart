@@ -377,6 +377,10 @@ class ExpenseListScreen extends StatefulWidget {
 }
 
 class _ExpenseListScreenState extends State<ExpenseListScreen> {
+  void showUpdateExpenseDialog(Expense expense) {
+    // TODO: Implement the update dialog for an expense
+  }
+
   @override
   Widget build(BuildContext context) {
     var expensesBox = Hive.box<Expense>('expenses');

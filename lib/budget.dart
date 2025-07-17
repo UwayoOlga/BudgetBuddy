@@ -27,8 +27,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
     for (var cat in categories) {
       var b = budgetsBox.values.firstWhere(
         (b) => b.userId == widget.userId && b.category == cat && b.period == period,
-        orElse: () => null,
-      );
+        orElse: () => Budget.defaultBudget(),
+      ) as Budget?;
       categoryBudgets[cat] = b != null ? (b.amount) : 0;
     }
     setState(() { loading = false; });
@@ -58,8 +58,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
             onPressed: () async {
               var existing = budgetsBox.values.firstWhere(
                 (b) => b.userId == widget.userId && b.category == cat && b.period == period,
-                orElse: () => null,
-              );
+                orElse: () => Budget.defaultBudget(),
+              ) as Budget?;
               if (existing != null) {
                 existing.amount = amount;
                 await existing.save();
@@ -105,8 +105,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
           var budgetsBox = Hive.box<Budget>('budgets');
           var b = budgetsBox.values.firstWhere(
             (b) => b.userId == widget.userId && b.category == cat && b.period == period,
-            orElse: () => null,
-          );
+            orElse: () => Budget.defaultBudget(),
+          ) as Budget?;
           double budget = categoryBudgets[cat] ?? 0;
           return Card(
             color: Color(0xFF2D0146),

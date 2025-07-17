@@ -14,4 +14,8 @@ class Budget extends HiveObject {
   @HiveField(4)
   String period;
   Budget({required this.userId, required this.month, required this.amount, required this.category, required this.period});
+
+  static Budget defaultBudget() {
+    return Budget(userId: -1, month: '', amount: 0.0, category: '', period: '');
+  }
 } 

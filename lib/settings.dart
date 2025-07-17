@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:budget_buddy/models/user.dart';
+import 'package:budgetbuddy/user.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
@@ -14,8 +14,8 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   String currency = 'USD';
   void showProfileUpdateDialog() {
-    var usersBox = Hive.box<User>('users');
-    var user = usersBox.get(widget.userId);
+    var usersBox = Hive.box('users');
+    var user = usersBox.get(widget.userId) as User?;
     String username = user?.username ?? '';
     String password = '';
     showDialog(

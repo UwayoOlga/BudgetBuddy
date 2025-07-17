@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'database_helper.dart';
 import 'package:intl/intl.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -23,8 +22,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Future<void> loadData() async {
     setState(() { loading = true; });
-    expenses = await DatabaseHelper.instance.getExpenses(widget.userId);
-    incomes = await DatabaseHelper.instance.getIncomes(widget.userId);
+    // TODO: Replace with Hive logic for expenses and incomes
+    // expenses = await DatabaseHelper.instance.getExpenses(widget.userId);
+    // incomes = await DatabaseHelper.instance.getIncomes(widget.userId);
+    expenses = [];
+    incomes = [];
     setState(() { loading = false; });
   }
 
