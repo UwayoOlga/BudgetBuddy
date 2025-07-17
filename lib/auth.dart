@@ -29,8 +29,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
     var hash = sha256.convert(utf8.encode(password)).toString();
-    await usersBox.add(User(username: username, passwordHash: hash));
-    Navigator.pushReplacementNamed(context, '/login');
+    int userId = await usersBox.add(User(username: username, passwordHash: hash));
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Registration Successful'),
+        content: Text('Your account has been created. Please log in.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -77,7 +92,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   onPressed: register,
-                  child: Text('Register', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  child: Text('Register', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
                 SizedBox(height: 16),
                 GestureDetector(
@@ -113,14 +128,15 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     var usersBox = Hive.box<User>('users');
     var hash = sha256.convert(utf8.encode(password)).toString();
-    final user = usersBox.values.firstWhere(
-      (u) => u.username == username && u.passwordHash == hash,
-      orElse: () => User.defaultUser(),
-    ) as User?;
-    if (user != null) {
-      Navigator.pushReplacementNamed(context, '/home', arguments: user.key);
+    final userEntry = usersBox.toMap().entries.firstWhere(
+      (entry) => entry.value.username == username && entry.value.passwordHash == hash,
+      orElse: () => MapEntry(-1, User(username: '', passwordHash: '')),
+    );
+    if (userEntry.key != -1) {
+      final userId = userEntry.key;
+      Navigator.pushReplacementNamed(context, '/home', arguments: userId);
     } else {
-      setState(() { error = 'Invalid credentials'; });
+      setState(() { error = 'Invalid username or password'; });
     }
   }
 
@@ -168,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   onPressed: login,
-                  child: Text('Login', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  child: Text('Login', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
                 SizedBox(height: 16),
                 GestureDetector(

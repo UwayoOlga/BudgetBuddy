@@ -96,20 +96,25 @@ class _SavingsScreenState extends State<SavingsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
             onPressed: () async {
-              if (name.isNotEmpty && target > 0 && targetDate != null) {
-                var savingsBox = Hive.box<SavingsGoal>('savings');
-                await savingsBox.add(SavingsGoal(
-                  userId: widget.userId,
-                  name: name,
-                  targetAmount: target,
-                  savedAmount: 0,
-                  targetDate: targetDate!,
-                ));
-                Navigator.pop(context);
-                loadData();
+              try {
+                if (name.isNotEmpty && target > 0 && targetDate != null) {
+                  var savingsBox = Hive.box<SavingsGoal>('savings');
+                  await savingsBox.add(SavingsGoal(
+                    userId: widget.userId,
+                    name: name,
+                    targetAmount: target,
+                    savedAmount: 0,
+                    targetDate: targetDate!,
+                  ));
+                  Navigator.pop(context);
+                  loadData();
+                }
+              } catch (e, stack) {
+                print('Error saving goal: ' + e.toString());
+                print(stack);
               }
             },
-            child: Text('Add'),
+            child: Text('Add', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -196,15 +201,20 @@ class _SavingsScreenState extends State<SavingsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
             onPressed: () async {
-              goal.name = name;
-              goal.targetAmount = target;
-              goal.savedAmount = saved;
-              goal.targetDate = targetDate;
-              await goal.save();
-              Navigator.pop(context);
-              setState(() {});
+              try {
+                goal.name = name;
+                goal.targetAmount = target;
+                goal.savedAmount = saved;
+                goal.targetDate = targetDate;
+                await goal.save();
+                Navigator.pop(context);
+                setState(() {});
+              } catch (e, stack) {
+                print('Error updating goal: ' + e.toString());
+                print(stack);
+              }
             },
-            child: Text('Update'),
+            child: Text('Update', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -226,7 +236,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                   style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
                   onPressed: showAddGoalDialog,
                   icon: Icon(Icons.add),
-                  label: Text('Add Goal'),
+                  label: Text('Add Goal', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),

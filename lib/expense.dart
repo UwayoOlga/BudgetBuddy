@@ -148,7 +148,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               Navigator.pop(context);
               setState(() {});
             },
-            child: Text('Update'),
+            child: Text('Update', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -358,7 +358,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   onPressed: addExpense,
-                  child: Text('Add Expense', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  child: Text('Add Expense', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ),
             ],

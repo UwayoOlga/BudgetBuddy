@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:hive/hive.dart';
 
 class CalendarScreen extends StatefulWidget {
   final int userId;
@@ -22,11 +23,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Future<void> loadData() async {
     setState(() { loading = true; });
-    // TODO: Replace with Hive logic for expenses and incomes
-    // expenses = await DatabaseHelper.instance.getExpenses(widget.userId);
-    // incomes = await DatabaseHelper.instance.getIncomes(widget.userId);
-    expenses = [];
-    incomes = [];
+    var expensesBox = Hive.box('expenses');
+    var incomesBox = Hive.box('incomes');
+    expenses = expensesBox.values.where((e) => e.userId == widget.userId).map((e) => {
+      'amount': e.amount,
+      'category': e.category,
+      'date': e.date.toString(),
+      'description': e.description,
+      'paymentMethod': e.paymentMethod,
+      'isRecurring': e.isRecurring,
+    }).toList();
+    incomes = incomesBox.values.where((i) => i.userId == widget.userId).map((i) => {
+      'amount': i.amount,
+      'source': i.source,
+      'date': i.date.toString(),
+      'notes': i.notes,
+    }).toList();
     setState(() { loading = false; });
   }
 

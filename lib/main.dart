@@ -29,6 +29,10 @@ void main() async {
   await Hive.openBox<Income>('incomes');
   await Hive.openBox<Budget>('budgets');
   await Hive.openBox<SavingsGoal>('savings');
+  // DEV ONLY: Clear old/corrupt data on first run. Remove after first successful run.
+  await Hive.box<Expense>('expenses').clear();
+  await Hive.box<Budget>('budgets').clear();
+  
   runApp(MyApp());
 }
 
@@ -67,10 +71,6 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       onGenerateRoute: (settings) {
-        if (settings.name == '/home') {
-          final userId = settings.arguments as int;
-          return MaterialPageRoute(builder: (_) => MainAppScreen(userId: userId));
-        }
         switch (settings.name) {
           case '/':
             return MaterialPageRoute(builder: (_) => SplashScreen());
@@ -78,8 +78,65 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => RegisterScreen());
           case '/login':
             return MaterialPageRoute(builder: (_) => LoginScreen());
+          case '/home': {
+            final userId = settings.arguments;
+            if (userId is int) {
+              return MaterialPageRoute(builder: (_) => MainAppScreen(userId: userId));
+            }
+            return _errorRoute();
+          }
+          case '/add': {
+            final userId = settings.arguments;
+            if (userId is int) {
+              return MaterialPageRoute(builder: (_) => AddExpenseScreen(userId: userId));
+            }
+            return _errorRoute();
+          }
+          case '/reports': {
+            final userId = settings.arguments;
+            if (userId is int) {
+              return MaterialPageRoute(builder: (_) => ReportsScreen(userId: userId));
+            }
+            return _errorRoute();
+          }
+          case '/calendar': {
+            final userId = settings.arguments;
+            if (userId is int) {
+              return MaterialPageRoute(builder: (_) => CalendarScreen(userId: userId));
+            }
+            return _errorRoute();
+          }
+          case '/income': {
+            final userId = settings.arguments;
+            if (userId is int) {
+              return MaterialPageRoute(builder: (_) => IncomeScreen(userId: userId));
+            }
+            return _errorRoute();
+          }
+          case '/budget': {
+            final userId = settings.arguments;
+            if (userId is int) {
+              return MaterialPageRoute(builder: (_) => BudgetScreen(userId: userId));
+            }
+            return _errorRoute();
+          }
+          case '/savings': {
+            final userId = settings.arguments;
+            if (userId is int) {
+              return MaterialPageRoute(builder: (_) => SavingsScreen(userId: userId));
+            }
+            return _errorRoute();
+          }
+          case '/settings': {
+            final userId = settings.arguments;
+            if (userId is int) {
+              return MaterialPageRoute(builder: (_) => SettingsScreen(userId: userId));
+            }
+            return _errorRoute();
+          }
+          default:
+            return _errorRoute();
         }
-        return null;
       },
     );
   }
@@ -142,4 +199,13 @@ class _MainAppScreenState extends State<MainAppScreen> {
       ),
     );
   }
+}
+
+Route<dynamic> _errorRoute() {
+  return MaterialPageRoute(
+    builder: (_) => Scaffold(
+      appBar: AppBar(title: Text('Error')),
+      body: Center(child: Text('Page not found or invalid arguments.')),
+    ),
+  );
 }

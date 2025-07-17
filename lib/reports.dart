@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:hive/hive.dart';
+import 'expense_model.dart';
+import 'income_model.dart';
 
 class ReportsScreen extends StatefulWidget {
   final int userId;
@@ -29,11 +32,22 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Future<void> loadData() async {
     setState(() { loading = true; });
-    // TODO: Replace with Hive logic for expenses and incomes
-    // var all = await DatabaseHelper.instance.getExpenses(widget.userId);
-    // incomes = await DatabaseHelper.instance.getIncomes(widget.userId);
-    expenses = [];
-    incomes = [];
+    var expensesBox = Hive.box('expenses');
+    var incomesBox = Hive.box('incomes');
+    expenses = expensesBox.values.where((e) => e.userId == widget.userId).map((e) => {
+      'amount': e.amount,
+      'category': e.category,
+      'date': e.date.toString(),
+      'description': e.description,
+      'paymentMethod': e.paymentMethod,
+      'isRecurring': e.isRecurring,
+    }).toList();
+    incomes = incomesBox.values.where((i) => i.userId == widget.userId).map((i) => {
+      'amount': i.amount,
+      'source': i.source,
+      'date': i.date.toString(),
+      'notes': i.notes,
+    }).toList();
     DateTime now = DateTime.now();
     DateTime start;
     if (period == 'This Month') {
@@ -99,38 +113,42 @@ class _ReportsScreenState extends State<ReportsScreen> {
           ],
         ),
         SizedBox(height: 16),
-        Row(
-          children: [
-            Text('Filter:', style: TextStyle(color: Colors.white70)),
-            SizedBox(width: 8),
-            DropdownButton<String>(
-              value: filterCategory,
-              dropdownColor: Color(0xFF2D0146),
-              style: TextStyle(color: Colors.white),
-              items: allCategories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-              onChanged: (v) => setState(() { filterCategory = v!; loadData(); }),
-            ),
-            SizedBox(width: 16),
-            Text('Payment:', style: TextStyle(color: Colors.white70)),
-            SizedBox(width: 8),
-            DropdownButton<String>(
-              value: filterPaymentMethod,
-              dropdownColor: Color(0xFF2D0146),
-              style: TextStyle(color: Colors.white),
-              items: allPaymentMethods.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-              onChanged: (v) => setState(() { filterPaymentMethod = v!; loadData(); }),
-            ),
-            SizedBox(width: 16),
-            Text('Sort by:', style: TextStyle(color: Colors.white70)),
-            SizedBox(width: 8),
-            DropdownButton<String>(
-              value: sortBy,
-              dropdownColor: Color(0xFF2D0146),
-              style: TextStyle(color: Colors.white),
-              items: [DropdownMenuItem(value: 'date', child: Text('Date')), DropdownMenuItem(value: 'amount', child: Text('Amount'))],
-              onChanged: (v) => setState(() { sortBy = v!; loadData(); }),
-            ),
-          ],
+        // Replace the filter Row with a horizontally scrollable Row
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              Text('Filter:', style: TextStyle(color: Colors.white70)),
+              SizedBox(width: 8),
+              DropdownButton<String>(
+                value: filterCategory,
+                dropdownColor: Color(0xFF2D0146),
+                style: TextStyle(color: Colors.white),
+                items: allCategories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                onChanged: (v) => setState(() { filterCategory = v!; loadData(); }),
+              ),
+              SizedBox(width: 16),
+              Text('Payment:', style: TextStyle(color: Colors.white70)),
+              SizedBox(width: 8),
+              DropdownButton<String>(
+                value: filterPaymentMethod,
+                dropdownColor: Color(0xFF2D0146),
+                style: TextStyle(color: Colors.white),
+                items: allPaymentMethods.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                onChanged: (v) => setState(() { filterPaymentMethod = v!; loadData(); }),
+              ),
+              SizedBox(width: 16),
+              Text('Sort by:', style: TextStyle(color: Colors.white70)),
+              SizedBox(width: 8),
+              DropdownButton<String>(
+                value: sortBy,
+                dropdownColor: Color(0xFF2D0146),
+                style: TextStyle(color: Colors.white),
+                items: [DropdownMenuItem(value: 'date', child: Text('Date')), DropdownMenuItem(value: 'amount', child: Text('Amount'))],
+                onChanged: (v) => setState(() { sortBy = v!; loadData(); }),
+              ),
+            ],
+          ),
         ),
         SizedBox(height: 16),
         Row(

@@ -59,7 +59,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 setState(() {});
               }
             },
-            child: Text('Update'),
+            child: Text('Update', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -75,7 +75,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
           onPressed: showProfileUpdateDialog,
-          child: Text('Update Profile'),
+          child: Text('Update Profile', style: TextStyle(color: Colors.white)),
         ),
         SizedBox(height: 24),
         Text('Currency', style: TextStyle(fontSize: 18)),
@@ -93,13 +93,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
           onPressed: () {},
-          child: Text('Backup Data'),
+          child: Text('Backup Data', style: TextStyle(color: Colors.white)),
         ),
         SizedBox(height: 8),
         ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF4B006E)),
           onPressed: () {},
-          child: Text('Restore Data'),
+          child: Text('Restore Data', style: TextStyle(color: Colors.white)),
         ),
         SizedBox(height: 24),
         Text('About', style: TextStyle(fontSize: 18)),
