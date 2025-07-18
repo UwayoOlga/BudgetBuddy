@@ -1,0 +1,2 @@
+C:/Users/ks/Downloads/BB/BudgetBuddy-main/android/app/.cxx/Debug/1z514c1v/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/ks/Downloads/BB/BudgetBuddy-main/android/app/.cxx/Debug/1z514c1v/armeabi-v7a/CMakeFiles/rebuild_cache.dir
