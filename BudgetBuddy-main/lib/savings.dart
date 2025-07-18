@@ -97,21 +97,34 @@ class _SavingsScreenState extends State<SavingsScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
             onPressed: () async {
               try {
-                if (name.isNotEmpty && target > 0 && targetDate != null) {
-                  var savingsBox = Hive.box<SavingsGoal>('savings');
-                  await savingsBox.add(SavingsGoal(
-                    userId: widget.userId,
-                    name: name,
-                    targetAmount: target,
-                    savedAmount: 0,
-                    targetDate: targetDate!,
-                  ));
-                  Navigator.pop(context);
-                  loadData();
+                if (name.isEmpty || target <= 0 || targetDate == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please fill all fields with valid values.')),
+                  );
+                  return;
                 }
-              } catch (e, stack) {
-                print('Error saving goal: ' + e.toString());
-                print(stack);
+                var savingsBox = Hive.box<SavingsGoal>('savings');
+                await savingsBox.add(SavingsGoal(
+                  userId: widget.userId,
+                  name: name,
+                  targetAmount: target,
+                  savedAmount: 0,
+                  targetDate: targetDate!,
+                ));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Savings goal added!')),
+                );
+                Navigator.pop(context);
+                loadData();
+              } catch (e) {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text('Error'),
+                    content: Text('Failed to save goal: \n$e'),
+                    actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
+                  ),
+                );
               }
             },
             child: Text('Add', style: TextStyle(color: Colors.white)),

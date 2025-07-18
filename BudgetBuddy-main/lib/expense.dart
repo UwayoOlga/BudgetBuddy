@@ -22,7 +22,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final paymentMethods = ['Cash', 'Debit Card', 'Mobile Money'];
 
   void addExpense() async {
-    if (amount > 0) {
+    try {
+      if (amount <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please enter a valid amount.')),
+        );
+        return;
+      }
       var expensesBox = Hive.box<Expense>('expenses');
       await expensesBox.add(Expense(
         userId: widget.userId,
@@ -33,7 +39,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         paymentMethod: paymentMethod,
         isRecurring: isRecurring,
       ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Expense added successfully!')),
+      );
       Navigator.pop(context);
+    } catch (e) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Error'),
+          content: Text('Failed to add expense: \n$e'),
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
+        ),
+      );
     }
   }
 

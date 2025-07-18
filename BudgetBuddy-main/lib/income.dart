@@ -124,26 +124,45 @@ class _IncomeScreenState extends State<IncomeScreen> with SingleTickerProviderSt
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
                           onPressed: () async {
-                            double? amt = double.tryParse(amountController.text);
-                            if (amt == null || sourceController.text.trim().isEmpty) return;
-                            var incomesBox = Hive.box<Income>('incomes');
-                            if (income == null) {
-                              await incomesBox.add(Income(
-                                userId: widget.userId,
-                                amount: amt,
-                                source: sourceController.text.trim(),
-                                date: date,
-                                notes: notesController.text.trim(),
-                              ));
-                            } else {
-                              income.amount = amt;
-                              income.source = sourceController.text.trim();
-                              income.date = date;
-                              income.notes = notesController.text.trim();
-                              await income.save();
+                            try {
+                              double? amt = double.tryParse(amountController.text);
+                              if (amt == null || sourceController.text.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Please enter a valid amount and source.')),
+                                );
+                                return;
+                              }
+                              var incomesBox = Hive.box<Income>('incomes');
+                              if (income == null) {
+                                await incomesBox.add(Income(
+                                  userId: widget.userId,
+                                  amount: amt,
+                                  source: sourceController.text.trim(),
+                                  date: date,
+                                  notes: notesController.text.trim(),
+                                ));
+                              } else {
+                                income.amount = amt;
+                                income.source = sourceController.text.trim();
+                                income.date = date;
+                                income.notes = notesController.text.trim();
+                                await income.save();
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(income == null ? 'Income added!' : 'Income updated!')),
+                              );
+                              Navigator.pop(context);
+                              setState(() {});
+                            } catch (e) {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text('Error'),
+                                  content: Text('Failed to save income: \n$e'),
+                                  actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
+                                ),
+                              );
                             }
-                            Navigator.pop(context);
-                            setState(() {});
                           },
                           child: Text(income == null ? 'Add' : 'Update'),
                         ),

@@ -56,24 +56,44 @@ class _BudgetScreenState extends State<BudgetScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
             onPressed: () async {
-              var existing = budgetsBox.values.firstWhere(
-                (b) => b.userId == widget.userId && b.category == cat && b.period == period,
-                orElse: () => Budget.defaultBudget(),
-              ) as Budget?;
-              if (existing != null) {
-                existing.amount = amount;
-                await existing.save();
-              } else {
-                await budgetsBox.add(Budget(
-                  userId: widget.userId,
-                  month: '',
-                  amount: amount,
-                  category: cat,
-                  period: period,
-                ));
+              try {
+                if (amount <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please enter a valid amount.')),
+                  );
+                  return;
+                }
+                var existing = budgetsBox.values.firstWhere(
+                  (b) => b.userId == widget.userId && b.category == cat && b.period == period,
+                  orElse: () => Budget.defaultBudget(),
+                ) as Budget?;
+                if (existing != null) {
+                  existing.amount = amount;
+                  await existing.save();
+                } else {
+                  await budgetsBox.add(Budget(
+                    userId: widget.userId,
+                    month: '',
+                    amount: amount,
+                    category: cat,
+                    period: period,
+                  ));
+                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Budget saved!')),
+                );
+                Navigator.pop(context);
+                loadBudgets();
+              } catch (e) {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text('Error'),
+                    content: Text('Failed to save budget: \n$e'),
+                    actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
+                  ),
+                );
               }
-              Navigator.pop(context);
-              loadBudgets();
             },
             child: Text('Save'),
           ),

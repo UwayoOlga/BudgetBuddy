@@ -37,16 +37,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         try {
           return e.userId == widget.userId;
         } catch (err) {
-          print('Expense missing userId: '
-              + e.toString());
+          print('Expense missing userId: ' + e.toString());
           return false;
         }
       }).toList();
-      print('Expenses: ' + expenses.toString());
       var now = DateTime.now();
       var month = "${now.year}-${now.month.toString().padLeft(2, '0')}";
       var budgetsBox = Hive.box<Budget>('budgets');
-      print('Budgets: ' + budgetsBox.values.toList().toString());
       var budgetData = budgetsBox.values.firstWhere(
         (b) {
           try {
@@ -58,7 +55,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         },
         orElse: () => Budget.defaultBudget(),
       );
-      print('BudgetData: ' + budgetData.toString());
       budget = budgetData != null ? (budgetData.amount ?? 0) : 0;
       spent = 0;
       totalBalance = 0;
@@ -94,6 +90,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } catch (e, st) {
       print('Error loading dashboard data: $e\n$st');
       errorMessage = 'Failed to load dashboard data. Please check your data.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load dashboard data.')),
+      );
     } finally {
       setState(() { loading = false; });
     }

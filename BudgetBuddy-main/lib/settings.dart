@@ -22,10 +22,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String currency = 'USD';
   void showProfileUpdateDialog() {
     var usersBox = Hive.box('users');
-    var user = usersBox.get(widget.userId) as User?;
+    var user = usersBox.get(widget.userId);
     String username = user?.username ?? '';
     String email = user?.email ?? '';
     String schoolName = user?.schoolName ?? '';
+    String address = user?.address ?? '';
     String password = '';
     showDialog(
       context: context,
@@ -57,6 +58,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             SizedBox(height: 8),
             TextField(
+              onChanged: (v) => address = v,
+              style: TextStyle(color: Colors.white),
+              decoration: InputDecoration(hintText: 'Address'),
+              controller: TextEditingController(text: user?.address ?? ''),
+            ),
+            SizedBox(height: 8),
+            TextField(
               onChanged: (v) => password = v,
               style: TextStyle(color: Colors.white),
               decoration: InputDecoration(hintText: 'New Password (leave blank to keep current)'),
@@ -72,16 +80,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
             onPressed: () async {
-              if (username.isNotEmpty) {
+              try {
+                if (username.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Username cannot be empty.')),
+                  );
+                  return;
+                }
                 user?.username = username;
                 user?.email = email;
                 user?.schoolName = schoolName;
+                user?.address = address;
                 if (password.isNotEmpty) {
                   user?.passwordHash = sha256.convert(utf8.encode(password)).toString();
                 }
                 await user?.save();
                 Navigator.pop(context);
                 setState(() {});
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Profile updated!')),
+                );
+              } catch (e) {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text('Error'),
+                    content: Text('Failed to update profile: \n$e'),
+                    actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
+                  ),
+                );
               }
             },
             child: Text('Update', style: TextStyle(color: Colors.white)),
