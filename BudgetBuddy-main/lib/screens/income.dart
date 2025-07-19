@@ -173,9 +173,9 @@ class _AddIncomeDialogState extends State<AddIncomeDialog> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: source,
+                value: categories.contains(source) ? source : null,
                 items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                onChanged: (v) => setState(() => source = v!),
+                onChanged: (v) => setState(() => source = v ?? categories.first),
                 dropdownColor: const Color(0xFF4B006E),
               ),
               const SizedBox(height: 12),
@@ -344,4 +344,7 @@ class _CategoryManagerDialogState extends State<CategoryManagerDialog> {
             ),
           ],
         ),
-      
+      ),
+    );
+  }
+} 
