@@ -68,12 +68,9 @@ A smart expense & budget tracker for students, built with Flutter and Hive.
 Below are screenshots of BudgetBuddy's main features and screens. To add your own screenshots:
 1. Place your image files in the `screenshots` folder inside the project root (`BudgetBuddy-main/screenshots`).
 2. Reference them in this section using Markdown:
-   ```markdown
-   ![Description](screenshots/your_image.png)
-   ```
 
 ### Welcome Screen
-![Welcome Screen](screenshots/Welcome_screen.jpeg)
+![Welcome Screen](BudgetBuddy-main/screenshots/Welcome_screen.jpeg)
 
 ### Login Screen
 ![Login Screen](screenshots/loginscreen.jpeg)
