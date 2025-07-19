@@ -108,8 +108,8 @@ class _AddIncomeDialogState extends State<AddIncomeDialog> {
   }
 
   void saveIncome() async {
-    final amt = double.tryParse(amountController.text);
-    if (amt == null || sourceController.text.trim().isEmpty) {
+    final amt = double.tryParse(amountController.text.trim());
+    if (amt == null || amt <= 0 || source.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please enter a valid amount and source', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
       return;
     }

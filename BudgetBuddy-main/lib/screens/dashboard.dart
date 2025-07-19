@@ -128,7 +128,7 @@ class DashboardScreen extends StatelessWidget {
                   children: [
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6C2EB7)),
-                      onPressed: () => Navigator.pushNamed(context, '/expenses', arguments: userId),
+                      onPressed: () => Navigator.pushNamed(context, '/add', arguments: userId),
                       icon: const Icon(Icons.list, color: Colors.white),
                       label: const Text('All Expenses', style: TextStyle(color: Colors.white)),
                     ),

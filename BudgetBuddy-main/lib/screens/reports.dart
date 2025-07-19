@@ -367,11 +367,21 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     const SizedBox(height: 8),
                     ...(() {
                       final allActivities = [
-                        ...incomes.map((i) => {'type': 'income', ...i}),
-                        ...expenses.map((e) => {'type': 'expense', ...e}),
-                        ...savings.map((s) => {'type': 'savings', ...s})
+                        ...incomes.map((i) => {'type': 'income', ...i, 'date': i['date'] ?? DateTime.now().toString()}),
+                        ...expenses.map((e) => {'type': 'expense', ...e, 'date': e['date'] ?? DateTime.now().toString()}),
+                        ...savings.map((s) => {
+                          'type': 'savings',
+                          ...s,
+                          'date': s['targetDate'] != null ? s['targetDate'].toString() : DateTime.now().toString(),
+                        })
                       ];
-                      allActivities.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
+                      allActivities.sort((a, b) {
+                        try {
+                          return DateTime.parse(b['date'] ?? DateTime.now().toString()).compareTo(DateTime.parse(a['date'] ?? DateTime.now().toString()));
+                        } catch (_) {
+                          return 0;
+                        }
+                      });
                       return allActivities.map((t) => Card(
                         color: t['type'] == 'income'
                           ? const Color(0xFF1A4D2E)
@@ -391,10 +401,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           ),
                           title: Text(
                             t['type'] == 'income'
-                              ? (t['source'] ?? '')
+                              ? (t['source'] ?? 'Income')
                               : t['type'] == 'expense'
-                                ? (t['category'] ?? '')
-                                : (t['name'] ?? ''),
+                                ? (t['category'] ?? 'Expense')
+                                : (t['name'] ?? 'Savings'),
                             style: const TextStyle(color: Colors.white),
                           ),
                           subtitle: Text(

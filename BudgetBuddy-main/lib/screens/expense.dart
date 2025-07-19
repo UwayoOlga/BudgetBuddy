@@ -56,7 +56,19 @@ class ExpenseListScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   title: Text(e.category, style: TextStyle(color: Colors.white)),
                   subtitle: Text(DateFormat('yyyy-MM-dd').format(e.date), style: TextStyle(color: Colors.white70)),
-                  trailing: Text(NumberFormat.currency(symbol: ' RWF', decimalDigits: 2).format(e.amount), style: TextStyle(color: Colors.white)),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(NumberFormat.currency(symbol: ' RWF', decimalDigits: 2).format(e.amount), style: TextStyle(color: Colors.white)),
+                      IconButton(
+                        icon: Icon(Icons.delete, color: Colors.redAccent),
+                        onPressed: () async {
+                          await e.delete();
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Expense deleted', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+                        },
+                      ),
+                    ],
+                  ),
                   onTap: () => showDialog(
                     context: context,
                     builder: (context) => AddExpenseDialog(userId: userId, expense: e),
