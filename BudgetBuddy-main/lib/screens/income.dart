@@ -113,7 +113,6 @@ class _AddIncomeDialogState extends State<AddIncomeDialog> {
   String source = '';
   DateTime date = DateTime.now();
   String notes = '';
-  final sourceController = TextEditingController();
   final amountController = TextEditingController();
   final notesController = TextEditingController();
 
@@ -125,7 +124,6 @@ class _AddIncomeDialogState extends State<AddIncomeDialog> {
       source = widget.income!.source;
       date = widget.income!.date;
       notes = widget.income!.notes;
-      sourceController.text = source;
       amountController.text = amount.toString();
       notesController.text = notes;
     }
@@ -133,7 +131,6 @@ class _AddIncomeDialogState extends State<AddIncomeDialog> {
 
   @override
   void dispose() {
-    sourceController.dispose();
     amountController.dispose();
     notesController.dispose();
     super.dispose();
@@ -151,7 +148,7 @@ class _AddIncomeDialogState extends State<AddIncomeDialog> {
         await box.add(Income(
           userId: widget.userId,
           amount: amt,
-          source: sourceController.text.trim(),
+          source: source.trim(),
           date: date,
           notes: notesController.text.trim(),
         ));
@@ -163,7 +160,7 @@ class _AddIncomeDialogState extends State<AddIncomeDialog> {
     } else {
       final inc = widget.income!;
       inc.amount = amt;
-      inc.source = sourceController.text.trim();
+      inc.source = source.trim();
       inc.date = date;
       inc.notes = notesController.text.trim();
       try {
@@ -217,7 +214,7 @@ class _AddIncomeDialogState extends State<AddIncomeDialog> {
               DropdownButtonFormField<String>(
                 value: categories.contains(source) ? source : null,
                 items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                onChanged: (v) => setState(() => source = v ?? categories.first),
+                onChanged: (v) => setState(() => source = v ?? ''),
                 dropdownColor: const Color(0xFF4B006E),
               ),
               const SizedBox(height: 12),

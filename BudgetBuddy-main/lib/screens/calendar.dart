@@ -31,12 +31,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF2D0146),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2D0146),
+          backgroundColor: const Color(0xFF2D0146),
         elevation: 0,
         title: const Text('Calendar', style: TextStyle(color: Colors.white)),
       ),
       body: Column(
-        children: [
+              children: [
           TableCalendar<Expense>(
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2100, 12, 31),
@@ -89,9 +89,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     },
                   ),
           ),
-        ],
-      ),
-    );
+              ],
+            ),
+          );
   }
 
   IconData _categoryIcon(String category) {
