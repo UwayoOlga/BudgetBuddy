@@ -1,69 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'auth.dart';
-import 'dashboard.dart';
-import 'reports.dart';
-import 'savings.dart';
-import 'settings.dart';
-import 'income.dart';
-import 'budget.dart';
-import 'calendar.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'user.dart';
-import 'expense_model.dart';
-import 'income_model.dart';
-import 'budget_model.dart';
-import 'savings_goal_model.dart';
-import 'expense.dart';
-import 'package:crypto/crypto.dart';
+import 'screens/auth.dart';
+import 'screens/dashboard.dart';
+import 'screens/reports.dart';
+import 'screens/savings.dart';
+import 'screens/settings.dart';
+import 'screens/income.dart';
+import 'screens/budget.dart';
+import 'screens/calendar.dart';
+import 'screens/expense.dart';
+import 'services/hive_service.dart';
+import 'models/user.dart';
+import 'models/expense_model.dart';
+import 'models/income_model.dart';
+import 'models/budget_model.dart';
+import 'models/savings_goal_model.dart';
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
-  Hive.registerAdapter(UserAdapter());
-  Hive.registerAdapter(ExpenseAdapter());
-  Hive.registerAdapter(IncomeAdapter());
-  Hive.registerAdapter(BudgetAdapter());
-  Hive.registerAdapter(SavingsGoalAdapter());
-  await Hive.openBox<User>('users');
-  await Hive.openBox<Expense>('expenses');
-  await Hive.openBox<Income>('incomes');
-  await Hive.openBox<Budget>('budgets');
-  await Hive.openBox<SavingsGoal>('savings');
-  // DEV ONLY: Clear old/corrupt data on first run. Remove after first successful run.
-  // await Hive.box<Budget>('budgets').clear();
-  
+  await HiveService.init();
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: Color(0xFF1A0023),
-        colorScheme: ColorScheme.dark(
+        scaffoldBackgroundColor: const Color(0xFF1A0023),
+        colorScheme: const ColorScheme.dark(
           primary: Color(0xFF6C2EB7),
           secondary: Color(0xFFF5F5F5),
-          background: Color(0xFF1A0023),
+          surface: Color(0xFF1A0023),
         ),
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme).apply(
           bodyColor: Colors.white,
           displayColor: Colors.white,
         ),
-        appBarTheme: AppBarTheme(
+        appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF4B006E),
           elevation: 0,
         ),
-        floatingActionButtonTheme: FloatingActionButtonThemeData(
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
           backgroundColor: Color(0xFF6C2EB7),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Color(0xFF2D0146),
+          fillColor: const Color(0xFF2D0146),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -89,7 +80,7 @@ class MyApp extends StatelessWidget {
           case '/add': {
             final userId = settings.arguments;
             if (userId is int) {
-              return MaterialPageRoute(builder: (_) => AddExpenseScreen(userId: userId));
+              return MaterialPageRoute(builder: (_) => ExpenseListScreen(userId: userId));
             }
             return _errorRoute();
           }
@@ -110,7 +101,7 @@ class MyApp extends StatelessWidget {
           case '/income': {
             final userId = settings.arguments;
             if (userId is int) {
-              return MaterialPageRoute(builder: (_) => IncomeScreen(userId: userId));
+              return MaterialPageRoute(builder: (_) => IncomeListScreen(userId: userId));
             }
             return _errorRoute();
           }
@@ -139,19 +130,39 @@ class MyApp extends StatelessWidget {
             return _errorRoute();
         }
       },
+      builder: (context, child) {
+        return WillPopScope(
+          onWillPop: () async {
+            await HiveService.closeAll();
+            return true;
+          },
+          child: child ?? Container(),
+        );
+      },
     );
   }
 }
 
 class SplashScreen extends StatelessWidget {
+  const SplashScreen({super.key});
+
+  Future<void> _checkSession(BuildContext context) async {
+    try {
+      var sessionBox = Hive.box('session');
+      final userId = sessionBox.get('userId');
+      if (userId is int && Hive.box<User>('users').containsKey(userId)) {
+        Navigator.pushReplacementNamed(context, '/home', arguments: userId);
+      } else {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    } catch (e) {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+  }
   @override
   Widget build(BuildContext context) {
-    print('SplashScreen loaded');
-    Future.delayed(Duration(seconds: 2), () {
-      print('Navigating to login');
-      Navigator.pushReplacementNamed(context, '/login');
-    });
-    return Scaffold(
+    Future.delayed(const Duration(milliseconds: 500), () => _checkSession(context));
+    return const Scaffold(
       body: Center(
         child: Text('BudgetBuddy', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Color(0xFF6C2EB7))),
       ),
@@ -160,6 +171,8 @@ class SplashScreen extends StatelessWidget {
 }
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -177,17 +190,24 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() { error = 'All fields required'; });
       return;
     }
-    var usersBox = Hive.box<User>('users');
-    var hash = sha256.convert(utf8.encode(password)).toString();
-    final userEntry = usersBox.toMap().entries.firstWhere(
-      (entry) => entry.value.username == username && entry.value.passwordHash == hash,
-      orElse: () => MapEntry(-1, User(username: '', passwordHash: '')),
-    );
-    if (userEntry.key != -1) {
-      final userId = userEntry.key;
-      Navigator.pushReplacementNamed(context, '/home', arguments: userId);
-    } else {
-      setState(() { error = 'Invalid username or password'; });
+    try {
+      var usersBox = Hive.box<User>('users');
+      var hash = sha256.convert(utf8.encode(password)).toString();
+      final userEntry = usersBox.toMap().entries.firstWhere(
+        (entry) => entry.value.username == username && entry.value.passwordHash == hash,
+        orElse: () => MapEntry(-1, User(username: '', passwordHash: '')),
+      );
+      if (userEntry.key != -1) {
+        final userId = userEntry.key;
+        // Save session
+        var sessionBox = Hive.box('session');
+        await sessionBox.put('userId', userId);
+        Navigator.pushReplacementNamed(context, '/home', arguments: userId);
+      } else {
+        setState(() { error = 'Invalid username or password'; });
+      }
+    } catch (e) {
+      setState(() { error = 'Login failed: $e'; });
     }
   }
 
@@ -197,22 +217,22 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.all(32),
+            padding: const EdgeInsets.all(32),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Welcome Back', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF6C2EB7))),
-                SizedBox(height: 32),
+                const Text('Welcome Back', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF6C2EB7))),
+                const SizedBox(height: 32),
                 TextField(
                   controller: usernameController,
-                  style: TextStyle(color: Colors.white),
-                  decoration: InputDecoration(hintText: 'Username'),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(hintText: 'Username'),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 TextField(
                   controller: passwordController,
                   obscureText: obscure,
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: 'Password',
                     suffixIcon: IconButton(
@@ -221,26 +241,26 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 if (error.isNotEmpty)
                   Padding(
-                    padding: EdgeInsets.only(bottom: 8),
-                    child: Text(error, style: TextStyle(color: Colors.redAccent)),
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(error, style: const TextStyle(color: Colors.redAccent)),
                   ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF6C2EB7),
-                    padding: EdgeInsets.symmetric(horizontal: 64, vertical: 18),
+                    backgroundColor: const Color(0xFF6C2EB7),
+                    padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 18),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   onPressed: login,
-                  child: Text('Login', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: const Text('Login', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () => Navigator.pushReplacementNamed(context, '/register'),
-                  child: Text('Don\'t have an account? Register', style: TextStyle(color: Colors.white70)),
+                  child: const Text('Don\'t have an account? Register', style: TextStyle(color: Colors.white70)),
                 ),
               ],
             ),
@@ -253,22 +273,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
 class MainAppScreen extends StatefulWidget {
   final int userId;
-  MainAppScreen({required this.userId});
+  const MainAppScreen({super.key, required this.userId});
   @override
   State<MainAppScreen> createState() => _MainAppScreenState();
 }
 
 class _MainAppScreenState extends State<MainAppScreen> {
   int _index = 0;
+  void logout() async {
+    var sessionBox = Hive.box('session');
+    await sessionBox.delete('userId');
+    Navigator.pushReplacementNamed(context, '/login');
+  }
   @override
   Widget build(BuildContext context) {
-    print('MainAppScreen loaded for userId:  [32m [1m');
-    print(widget.userId);
-    print('\u001b[0m');
     final screens = [
       DashboardScreen(userId: widget.userId),
-      AddExpenseScreen(userId: widget.userId),
-      IncomeScreen(userId: widget.userId),
+      ExpenseListScreen(userId: widget.userId),
+      IncomeListScreen(userId: widget.userId),
       BudgetScreen(userId: widget.userId),
       CalendarScreen(userId: widget.userId),
       ReportsScreen(userId: widget.userId),
@@ -278,13 +300,13 @@ class _MainAppScreenState extends State<MainAppScreen> {
     return Scaffold(
       body: screens[_index],
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Color(0xFF2D0146),
-        selectedItemColor: Color(0xFF6C2EB7),
+        backgroundColor: const Color(0xFF2D0146),
+        selectedItemColor: const Color(0xFF6C2EB7),
         unselectedItemColor: Colors.white,
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),
         type: BottomNavigationBarType.fixed,
-        items: [
+        items: const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Add'),
           BottomNavigationBarItem(icon: Icon(Icons.attach_money), label: 'Income'),
@@ -295,6 +317,18 @@ class _MainAppScreenState extends State<MainAppScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],
       ),
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            const DrawerHeader(child: Text('BudgetBuddy', style: TextStyle(fontSize: 24, color: Color(0xFF6C2EB7)))),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: logout,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -302,8 +336,8 @@ class _MainAppScreenState extends State<MainAppScreen> {
 Route<dynamic> _errorRoute() {
   return MaterialPageRoute(
     builder: (_) => Scaffold(
-      appBar: AppBar(title: Text('Error')),
-      body: Center(child: Text('Page not found or invalid arguments.')),
+      appBar: AppBar(title: const Text('Error')),
+      body: const Center(child: Text('Page not found or invalid arguments.')),
     ),
   );
 }
