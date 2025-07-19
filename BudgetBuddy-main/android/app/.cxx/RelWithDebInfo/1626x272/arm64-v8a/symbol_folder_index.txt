@@ -1,0 +1,1 @@
+C:\Users\ks\Downloads\BB\BudgetBuddy-main\build\app\intermediates\cxx\RelWithDebInfo\1626x272\obj\arm64-v8a
