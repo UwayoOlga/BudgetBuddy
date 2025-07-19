@@ -4,6 +4,7 @@ import '../models/income_model.dart';
 import 'package:intl/intl.dart';
 import '../models/category_model.dart';
 import '../services/hive_service.dart';
+import '../services/notifications.dart';
 
 class IncomeListScreen extends StatelessWidget {
   final int userId;
@@ -29,38 +30,69 @@ class IncomeListScreen extends StatelessWidget {
       body: ValueListenableBuilder(
         valueListenable: Hive.box<Income>('incomes').listenable(),
         builder: (context, Box<Income> box, _) {
+          final sessionBox = HiveService.getSessionBox();
+          final currency = sessionBox.get('currency', defaultValue: 'RWF');
+          final remindersEnabled = sessionBox.get('remindersEnabled', defaultValue: true);
+          final salaryDay = sessionBox.get('salaryDay', defaultValue: 25);
           final incomes = box.values.where((i) => i.userId == userId).toList()
             ..sort((a, b) => b.date.compareTo(a.date));
-          if (incomes.isEmpty) {
-            return Center(child: Text('No income records yet.', style: TextStyle(color: Colors.white54)));
+          final now = DateTime.now();
+          String? incomeReminder;
+          final thisMonthIncome = incomes.any((i) => i.date.year == now.year && i.date.month == now.month);
+          if (remindersEnabled && now.day == salaryDay && !thisMonthIncome) {
+            incomeReminder = 'Reminder: Today is your expected salary day. Don\'t forget to log your income!';
           }
-          return ListView.separated(
-            padding: const EdgeInsets.all(24),
-            itemCount: incomes.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, i) {
-              final inc = incomes[i];
-              return Dismissible(
-                key: ValueKey(inc.key),
-                background: Container(color: Colors.redAccent, alignment: Alignment.centerLeft, child: Padding(padding: EdgeInsets.only(left: 24), child: Icon(Icons.delete, color: Colors.white))),
-                direction: DismissDirection.startToEnd,
-                onDismissed: (_) async {
-                  await inc.delete();
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Income deleted', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
-                },
-                child: ListTile(
-                  tileColor: const Color(0xFF4B006E),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  title: Text(inc.source, style: TextStyle(color: Colors.white)),
-                  subtitle: Text(DateFormat('yyyy-MM-dd').format(inc.date), style: TextStyle(color: Colors.white70)),
-                  trailing: Text(NumberFormat.currency(symbol: ' RWF', decimalDigits: 2).format(inc.amount), style: TextStyle(color: Colors.white)),
-                  onTap: () => showDialog(
-                    context: context,
-                    builder: (context) => AddIncomeDialog(userId: userId, income: inc),
-                  ),
+          if (incomes.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.attach_money, color: Colors.white24, size: 64),
+                  SizedBox(height: 16),
+                  Text('No income records yet.', style: TextStyle(color: Colors.white54)),
+                ],
+              ),
+            );
+          }
+          return Column(
+            children: [
+              if (incomeReminder != null)
+                NotificationsBanner(reminder: incomeReminder),
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(24),
+                  itemCount: incomes.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, i) {
+                    final inc = incomes[i];
+                    return Dismissible(
+                      key: ValueKey(inc.key),
+                      background: Container(color: Colors.redAccent, alignment: Alignment.centerLeft, child: Padding(padding: EdgeInsets.only(left: 24), child: Icon(Icons.delete, color: Colors.white))),
+                      direction: DismissDirection.startToEnd,
+                      onDismissed: (_) async {
+                        try {
+                          await inc.delete();
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Income deleted', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+                        } catch (err) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete income. Please try again.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+                        }
+                      },
+                      child: ListTile(
+                        tileColor: const Color(0xFF4B006E),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        title: Text(inc.source, style: TextStyle(color: Colors.white)),
+                        subtitle: Text(DateFormat('yyyy-MM-dd').format(inc.date), style: TextStyle(color: Colors.white70)),
+                        trailing: Text(NumberFormat.currency(symbol: ' ' + currency, decimalDigits: 2).format(inc.amount), style: TextStyle(color: Colors.white)),
+                        onTap: () => showDialog(
+                          context: context,
+                          builder: (context) => AddIncomeDialog(userId: userId, income: inc),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
+              ),
+            ],
           );
         },
       ),
@@ -115,24 +147,32 @@ class _AddIncomeDialogState extends State<AddIncomeDialog> {
     }
     final box = Hive.box<Income>('incomes');
     if (widget.income == null) {
-      await box.add(Income(
-        userId: widget.userId,
-        amount: amt,
-        source: sourceController.text.trim(),
-        date: date,
-        notes: notesController.text.trim(),
-      ));
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Income added', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+      try {
+        await box.add(Income(
+          userId: widget.userId,
+          amount: amt,
+          source: sourceController.text.trim(),
+          date: date,
+          notes: notesController.text.trim(),
+        ));
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Income added', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+      } catch (err) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add income. Please try again.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+      }
     } else {
       final inc = widget.income!;
       inc.amount = amt;
       inc.source = sourceController.text.trim();
       inc.date = date;
       inc.notes = notesController.text.trim();
-      await inc.save();
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Income updated', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+      try {
+        await inc.save();
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Income updated', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+      } catch (err) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update income. Please try again.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+      }
     }
   }
 
@@ -164,6 +204,8 @@ class _AddIncomeDialogState extends State<AddIncomeDialog> {
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
+                  labelText: source.isNotEmpty ? source : 'Amount',
+                  labelStyle: TextStyle(color: Colors.white70),
                   hintText: 'Amount',
                   hintStyle: TextStyle(color: Colors.white54),
                   filled: true,
@@ -295,8 +337,12 @@ class _CategoryManagerDialogState extends State<CategoryManagerDialog> {
                   IconButton(
                     icon: Icon(Icons.delete, color: Colors.redAccent),
                     onPressed: () async {
-                      await cat.delete();
-                      setState(() {});
+                      try {
+                        await cat.delete();
+                        setState(() {});
+                      } catch (err) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete category. Please try again.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+                      }
                     },
                   ),
                 ],
@@ -326,10 +372,18 @@ class _CategoryManagerDialogState extends State<CategoryManagerDialog> {
                     if (editingCategory != null) {
                       final cat = categories.firstWhere((c) => c.name == editingCategory);
                       cat.name = name;
-                      await cat.save();
+                      try {
+                        await cat.save();
+                      } catch (err) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update category. Please try again.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+                      }
                       setState(() { editingCategory = null; controller.clear(); });
                     } else {
-                      await box.add(Category(userId: widget.userId, name: name, type: widget.type));
+                      try {
+                        await box.add(Category(userId: widget.userId, name: name, type: widget.type));
+                      } catch (err) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add category. Please try again.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+                      }
                       setState(() { controller.clear(); });
                     }
                   },

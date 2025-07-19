@@ -182,6 +182,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final sessionBox = HiveService.getSessionBox();
+    final currency = sessionBox.get('currency', defaultValue: 'RWF');
     final totalIncome = incomes.fold(0.0, (a, b) => a + (b['amount'] ?? 0));
     final totalExpenses = expenses.fold(0.0, (a, b) => a + (b['amount'] ?? 0));
     final profit = totalIncome - totalExpenses;
@@ -311,8 +313,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Total Income: +${totalIncome.toStringAsFixed(2)}', style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
-                        Text('Total Expenses: -${totalExpenses.toStringAsFixed(2)}', style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                        Text('Total Income: +' + NumberFormat.currency(symbol: ' ' + currency, decimalDigits: 2).format(totalIncome), style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+                        Text('Total Expenses: -' + NumberFormat.currency(symbol: ' ' + currency, decimalDigits: 2).format(totalExpenses), style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -324,7 +326,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       child: ListTile(
                         title: Text('${b['category']} (${b['period']})', style: const TextStyle(color: Colors.white)),
-                        subtitle: Text('Amount: ${b['amount'].toStringAsFixed(2)}', style: const TextStyle(color: Colors.white70)),
+                        subtitle: Text('Amount: ' + NumberFormat.currency(symbol: ' ' + currency, decimalDigits: 2).format(b['amount']), style: const TextStyle(color: Colors.white70)),
                       ),
                     )),
                     const SizedBox(height: 16),
@@ -336,7 +338,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       child: ListTile(
                         title: Text(s['name'], style: const TextStyle(color: Colors.white)),
-                        subtitle: Text('Saved: ${s['savedAmount'].toStringAsFixed(2)} / ${s['targetAmount'].toStringAsFixed(2)}', style: const TextStyle(color: Colors.white70)),
+                        subtitle: Text('Saved: ' + NumberFormat.currency(symbol: ' ' + currency, decimalDigits: 2).format(s['savedAmount']) + ' / ' + NumberFormat.currency(symbol: ' ' + currency, decimalDigits: 2).format(s['targetAmount']), style: const TextStyle(color: Colors.white70)),
                         trailing: Text('Target: ${DateFormat('yyyy-MM-dd').format(s['targetDate'])}', style: const TextStyle(color: Colors.white54)),
                       ),
                     )),
@@ -419,9 +421,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (t['type'] == 'income')
-                                Text('+' + (t['amount'] ?? 0).toStringAsFixed(2), style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+                                Text('+' + NumberFormat.currency(symbol: ' ' + currency, decimalDigits: 2).format(t['amount'] ?? 0), style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
                               if (t['type'] == 'expense')
-                                Text('-' + (t['amount'] ?? 0).toStringAsFixed(2), style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                                Text('-' + NumberFormat.currency(symbol: ' ' + currency, decimalDigits: 2).format(t['amount'] ?? 0), style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
                               if (t['type'] == 'savings')
                                 const Icon(Icons.savings, color: Colors.amberAccent),
                             ],

@@ -51,7 +51,16 @@ class SavingsScreen extends StatelessWidget {
               builder: (context, box, _) {
                 final goals = box.values.where((g) => g.userId == userId).toList();
                 if (goals.isEmpty) {
-                  return Center(child: Text('No savings goals yet.', style: TextStyle(color: Colors.white54)));
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.savings, color: Colors.white24, size: 64),
+                        SizedBox(height: 16),
+                        Text('No savings goals yet.', style: TextStyle(color: Colors.white54)),
+                      ],
+                    ),
+                  );
                 }
                 return ListView.separated(
                   padding: const EdgeInsets.all(24),
@@ -65,8 +74,12 @@ class SavingsScreen extends StatelessWidget {
                       background: Container(color: Colors.redAccent, alignment: Alignment.centerLeft, child: Padding(padding: EdgeInsets.only(left: 24), child: Icon(Icons.delete, color: Colors.white))),
                       direction: DismissDirection.startToEnd,
                       onDismissed: (_) async {
-                        await g.delete();
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Goal deleted', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+                        try {
+                          await g.delete();
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Goal deleted', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+                        } catch (err) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete goal. Please try again.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+                        }
                       },
                       child: ListTile(
                         tileColor: const Color(0xFF4B006E),
@@ -86,12 +99,22 @@ class SavingsScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.white),
-                          onPressed: () => showDialog(
-                            context: context,
-                            builder: (context) => AddSavingsGoalDialog(userId: userId, goal: g),
-                          ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.delete, color: Colors.redAccent),
+                              onPressed: () async {
+                                try {
+                                  await g.delete();
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Goal deleted', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+                                } catch (err) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete goal. Please try again.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+                                }
+                              },
+                            ),
+                            Icon(Icons.edit, color: Colors.white),
+                          ],
                         ),
                       ),
                     );
@@ -154,24 +177,32 @@ class _AddSavingsGoalDialogState extends State<AddSavingsGoalDialog> {
     }
     final box = Hive.box<SavingsGoal>('savings');
     if (widget.goal == null) {
-      await box.add(SavingsGoal(
-        userId: widget.userId,
-        name: nameController.text.trim(),
-        targetAmount: t,
-        savedAmount: s,
-        targetDate: targetDate!,
-      ));
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Goal added', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+      try {
+        await box.add(SavingsGoal(
+          userId: widget.userId,
+          name: nameController.text.trim(),
+          targetAmount: t,
+          savedAmount: s,
+          targetDate: targetDate!,
+        ));
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Goal added', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+      } catch (err) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add goal. Please try again.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+      }
     } else {
       final g = widget.goal!;
       g.name = nameController.text.trim();
       g.targetAmount = t;
       g.savedAmount = s;
       g.targetDate = targetDate!;
-      await g.save();
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Goal updated', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+      try {
+        await g.save();
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Goal updated', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+      } catch (err) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update goal. Please try again.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));
+      }
     }
   }
 

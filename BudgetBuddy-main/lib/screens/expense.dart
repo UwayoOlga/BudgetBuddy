@@ -7,6 +7,7 @@ import '../models/budget_model.dart';
 import '../models/category_model.dart';
 import 'income.dart' show CategoryManagerDialog;
 import 'package:hive/hive.dart';
+import '../services/notifications.dart';
 
 class ExpenseListScreen extends StatelessWidget {
   final int userId;
@@ -32,8 +33,26 @@ class ExpenseListScreen extends StatelessWidget {
       body: ValueListenableBuilder(
         valueListenable: Hive.box<Expense>('expenses').listenable(),
         builder: (context, Box<Expense> box, _) {
+          final sessionBox = HiveService.getSessionBox();
+          final currency = sessionBox.get('currency', defaultValue: 'RWF');
           final expenses = box.values.where((e) => e.userId == userId).toList()
             ..sort((a, b) => b.date.compareTo(a.date));
+          final now = DateTime.now();
+          final month = "${now.year}-${now.month.toString().padLeft(2, '0')}";
+          final budgetsBox = HiveService.getBudgetBox();
+          final budgetData = budgetsBox.values.firstWhere(
+            (b) => b.userId == userId && b.month == month,
+            orElse: () => Budget.defaultBudget(),
+          );
+          final budget = budgetData.amount;
+          double spent = 0;
+          for (var e in expenses) {
+            spent += e.amount;
+          }
+          String? budgetWarning;
+          if (budget > 0 && spent / budget >= 0.8) {
+            budgetWarning = 'Warning: You have spent 80% or more of your budget!';
+          }
           if (expenses.isEmpty) {
             return Center(child: Text('No expenses yet.', style: TextStyle(color: Colors.white54)));
           }
@@ -59,7 +78,7 @@ class ExpenseListScreen extends StatelessWidget {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(NumberFormat.currency(symbol: ' RWF', decimalDigits: 2).format(e.amount), style: TextStyle(color: Colors.white)),
+                      Text(NumberFormat.currency(symbol: ' ' + currency, decimalDigits: 2).format(e.amount), style: TextStyle(color: Colors.white)),
                       IconButton(
                         icon: Icon(Icons.delete, color: Colors.redAccent),
                         onPressed: () async {

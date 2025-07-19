@@ -6,7 +6,8 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final bool showRegistrationSuccess;
+  const LoginScreen({super.key, this.showRegistrationSuccess = false});
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -57,6 +58,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.showRegistrationSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Registration successful! Please log in.', style: TextStyle(color: Colors.white)), backgroundColor: Color(0xFF6C2EB7)),
+        );
+      }
+    });
     return Scaffold(
       backgroundColor: const Color(0xFF2D0146),
       body: Center(
@@ -159,6 +167,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() { error = 'All fields required'; });
       return;
     }
+    if (password.length < 6) {
+      setState(() { error = 'Password must be at least 6 characters.'; });
+      return;
+    }
     var usersBox = Hive.box<User>('users');
     bool exists = usersBox.values.any((u) => u.username == username);
     if (exists) {
@@ -166,10 +178,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
     var hash = sha256.convert(utf8.encode(password)).toString();
-    int userId = await usersBox.add(User(username: username, passwordHash: hash));
-    var sessionBox = Hive.box('session');
-    await sessionBox.put('userId', userId);
-    Navigator.pushReplacementNamed(context, '/home', arguments: userId);
+    await usersBox.add(User(username: username, passwordHash: hash));
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LoginScreen(showRegistrationSuccess: true),
+        ),
+      );
+    }
   }
 
   @override

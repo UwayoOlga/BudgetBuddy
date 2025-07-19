@@ -143,8 +143,32 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnim;
+  late Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    _scaleAnim = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+    _controller.forward();
+    Future.delayed(const Duration(milliseconds: 1500), () => _checkSession(context));
+  }
 
   Future<void> _checkSession(BuildContext context) async {
     try {
@@ -159,12 +183,50 @@ class SplashScreen extends StatelessWidget {
       Navigator.pushReplacementNamed(context, '/login');
     }
   }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    Future.delayed(const Duration(milliseconds: 500), () => _checkSession(context));
-    return const Scaffold(
+    return Scaffold(
+      backgroundColor: const Color(0xFF2D0146),
       body: Center(
-        child: Text('BudgetBuddy', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Color(0xFF6C2EB7))),
+        child: FadeTransition(
+          opacity: _fadeAnim,
+          child: ScaleTransition(
+            scale: _scaleAnim,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'BudgetBuddy',
+                  style: TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 2,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 16,
+                        color: Color(0xFF6C2EB7).withOpacity(0.5),
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6C2EB7)),
+                  backgroundColor: Colors.white24,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

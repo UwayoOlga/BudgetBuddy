@@ -19,7 +19,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProviderStateMixin {
-  String currency = 'USD';
+  String currency = 'RWF';
+  int salaryDay = 25;
+  bool remindersEnabled = true;
   late TextEditingController usernameController;
   late TextEditingController emailController;
   late TextEditingController schoolNameController;
@@ -36,6 +38,13 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     schoolNameController = TextEditingController(text: user?.schoolName ?? '');
     _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
     _scaleAnim = CurvedAnimation(parent: _animController, curve: Curves.easeInOut);
+    // Load currency, salaryDay, remindersEnabled from session box
+    var sessionBox = HiveService.getSessionBox();
+    setState(() {
+      currency = sessionBox.get('currency', defaultValue: 'RWF');
+      salaryDay = sessionBox.get('salaryDay', defaultValue: 25);
+      remindersEnabled = sessionBox.get('remindersEnabled', defaultValue: true);
+    });
   }
 
   @override
@@ -149,9 +158,30 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              var sessionBox = HiveService.getSessionBox();
-              await sessionBox.delete('userId');
-              Navigator.pushReplacementNamed(context, '/login');
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: const Color(0xFF2D0146),
+                  title: const Text('Confirm Logout', style: TextStyle(color: Color(0xFF6C2EB7))),
+                  content: const Text('Are you sure you want to logout?', style: TextStyle(color: Colors.white)),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel', style: TextStyle(color: Colors.white)),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Logout', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              );
+              if (confirmed == true) {
+                var sessionBox = HiveService.getSessionBox();
+                await sessionBox.delete('userId');
+                Navigator.pushReplacementNamed(context, '/login');
+              }
             },
             tooltip: 'Logout',
           ),
@@ -175,7 +205,44 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
             dropdownColor: const Color(0xFF2D0146),
             style: const TextStyle(color: Colors.white),
             items: ['USD', 'EUR', 'GBP', 'KES', 'NGN', 'INR', 'RWF'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-            onChanged: (v) => setState(() => currency = v!),
+            onChanged: (v) {
+              if (v != null) {
+                setState(() => currency = v);
+                var sessionBox = HiveService.getSessionBox();
+                sessionBox.put('currency', v);
+              }
+            },
+          ),
+          const SizedBox(height: 24),
+          const Text('Salary Day', style: TextStyle(fontSize: 18)),
+          const SizedBox(height: 8),
+          DropdownButton<int>(
+            value: salaryDay,
+            dropdownColor: const Color(0xFF2D0146),
+            style: const TextStyle(color: Colors.white),
+            items: List.generate(31, (i) => i + 1).map((d) => DropdownMenuItem(value: d, child: Text('Day $d'))).toList(),
+            onChanged: (v) {
+              if (v != null) {
+                setState(() => salaryDay = v);
+                var sessionBox = HiveService.getSessionBox();
+                sessionBox.put('salaryDay', v);
+              }
+            },
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Enable Reminders', style: TextStyle(fontSize: 18)),
+              Switch(
+                value: remindersEnabled,
+                onChanged: (v) {
+                  setState(() => remindersEnabled = v);
+                  var sessionBox = HiveService.getSessionBox();
+                  sessionBox.put('remindersEnabled', v);
+                },
+              ),
+            ],
           ),
           const SizedBox(height: 40),
           Center(
@@ -188,9 +255,30 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
               icon: const Icon(Icons.logout, color: Colors.white),
               label: const Text('Logout', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               onPressed: () async {
-                var sessionBox = HiveService.getSessionBox();
-                await sessionBox.delete('userId');
-                Navigator.pushReplacementNamed(context, '/login');
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    backgroundColor: const Color(0xFF2D0146),
+                    title: const Text('Confirm Logout', style: TextStyle(color: Color(0xFF6C2EB7))),
+                    content: const Text('Are you sure you want to logout?', style: TextStyle(color: Colors.white)),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel', style: TextStyle(color: Colors.white)),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6C2EB7)),
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Logout', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true) {
+                  var sessionBox = HiveService.getSessionBox();
+                  await sessionBox.delete('userId');
+                  Navigator.pushReplacementNamed(context, '/login');
+                }
               },
             ),
           ),
