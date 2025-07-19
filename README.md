@@ -73,31 +73,31 @@ Below are screenshots of BudgetBuddy's main features and screens. To add your ow
 ![Welcome Screen](BudgetBuddy-main/screenshots/Welcome_screen.jpeg)
 
 ### Login Screen
-![Login Screen](screenshots/loginscreen.jpeg)
+![Login Screen](BudgetBuddy-main/screenshots/loginscreen.jpeg)
 
 ### Register
-![Register](screenshots/register.jpeg)
+![Register](BudgetBuddy-main/screenshots/register.jpeg)
 
 ### Dashboard (Empty)
-![Empty Dashboard](screenshots/emptydashboard.jpeg)
+![Empty Dashboard](BudgetBuddy-main/screenshots/emptydashboard.jpeg)
 
 ### Expenses
-![Expenses](screenshots/expenses.jpeg)
+![Expenses](BudgetBuddy-main/screenshots/expenses.jpeg)
 
 ### Income
-![Income](screenshots/income.jpeg)
+![Income](BudgetBuddy-main/screenshots/income.jpeg)
 
 ### Savings
-![Savings](screenshots/savings.jpeg)
+![Savings](BudgetBuddy-main/screenshots/savings.jpeg)
 
 ### Report
-![Report](screenshots/report.jpeg)
+![Report](BudgetBuddy-main/screenshots/report.jpeg)
 
 ### Report (Alternative)
-![Report 1](screenshots/report1.jpeg)
+![Report 1](BudgetBuddy-main/screenshots/report1.jpeg)
 
 ### Settings
-![Settings](screenshots/settings.jpeg)
+![Settings](BudgetBuddy-main/screenshots/settings.jpeg)
 
 ## Contributing
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
